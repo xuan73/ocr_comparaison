@@ -151,7 +151,7 @@ def convert_split_and_save_batch(input_pdf, output_md, parts: int=5):
     with open(output_md, "w", encoding="utf-8") as f:
         for r in results:
             md = r["response"]['body']["pages"][0]["markdown"]
-            f.write(md + "\n")
+            f.write(md)
 
     print(f"[SUCCESS] Batch-based OCR Markdown written to: {output_md}")
 

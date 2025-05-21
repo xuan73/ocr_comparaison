@@ -1,11 +1,11 @@
 import os
 from difflib import unified_diff
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import gc
+from concurrent.futures import ThreadPoolExecutor, as_completed # Try IOHttp
 
 from pdf_to_md import convert_pdf_to_markdown, split_pdf, convert_split_and_save_batch
 from util import timeit
 
+NB_PROCESSES = 10
 
 def convert_whole_and_save(input_pdf, output_md):
     """Whole document conversion using existing function"""
@@ -25,7 +25,7 @@ def convert_split_and_save_single_process(input_pdf, output_md, parts=5):
         os.remove(temp_md)
 
     with open(output_md, "w", encoding="utf-8") as f:
-        f.write("\n\n---\n\n".join(all_md))
+        f.write("".join(all_md))
 
     print(f"[SUCCESS] Merged {parts} Markdown parts to: {output_md}")
 
@@ -65,12 +65,12 @@ def convert_part_to_markdown(part_file):
     return (part_file, content)
 
 @timeit
-def convert_split_and_save_parallel(input_pdf, output_md, parts=5):
+def convert_split_and_save_parallel(input_pdf, output_md, parts):
     """Parallel version of split and convert process"""
     part_files = split_pdf(input_pdf, "temp_parts", parts)
     markdown_map = {}
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=NB_PROCESSES) as executor:
         future_to_file = {executor.submit(convert_part_to_markdown, f): f for f in part_files}
 
         for future in as_completed(future_to_file):
@@ -98,6 +98,6 @@ if __name__ == "__main__":
     md_whole = "output/attention_whole.md"
     md_split = "output/attention_split.md"
     convert_whole_and_save(input_pdf, md_whole)
-    convert_split_and_save_parallel(input_pdf, md_split, parts=10)
-    # convert_split_and_save_batch(input_pdf, md_split, parts=10)
+    convert_split_and_save_parallel(input_pdf, md_split, parts=NB_PROCESSES)
+    # convert_split_and_save_batch(input_pdf, md_split, parts=NB_PROCESSES)
     compare_markdown_files(md_whole, md_split)
