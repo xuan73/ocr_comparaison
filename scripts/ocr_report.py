@@ -67,10 +67,11 @@ def create_charts(speed_data, accuracy_data):
     plt.savefig(RESULTS_DIR / "speed_chart.png")
 
     # Accuracy Chart
+    accuracy_files = [d['file'] for d in accuracy_data]
     diff_ratios = [d['diff_ratio'] for d in accuracy_data]
 
     plt.figure(figsize=(12, 6))
-    plt.bar(files, diff_ratios, label='Diff Ratio')
+    plt.bar(accuracy_files, diff_ratios, label='Diff Ratio')
     plt.xticks(rotation=45, ha='right')
     plt.ylim(0.85, 1)
     plt.ylabel('Diff Ratio (1 = Perfect Match)')
