@@ -10,7 +10,7 @@ It measures **speed** and **accuracy** (BLEU, ROUGE) of converting PDF documents
 ## 📦 Project Structure
 
 ```
-ocr_comparison_project/
+ocr_comparison/
 ├── scripts/
 │   ├── ocr_model.py         # OCR Model Abstraction and Implementation
 │   ├── benchmark_runner.py  # Speed Benchmark Script
@@ -41,7 +41,6 @@ pip install -r requirements.txt
 Make sure you have:
 - Mistral API Key in `.env` file as `MISTRAL_API_KEY`
 - `marker` library installed
-- NLTK and ROUGE libraries for accuracy evaluation
 
 ### 2. Run the Full Benchmark
 ```bash
