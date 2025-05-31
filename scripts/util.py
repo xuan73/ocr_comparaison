@@ -14,6 +14,13 @@ def timeit(func):
     return wrapper
 
 
+def time_function(func, *args, **kwargs):
+    start = time.time()
+    result = func(*args, **kwargs)
+    end = time.time()
+    return result, round(end - start, 2)
+
+
 def split_pdf(filepath, output_prefix, parts):
     reader = PdfReader(filepath)
     total_pages = len(reader.pages)
