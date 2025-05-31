@@ -65,17 +65,28 @@ python run_all.py
 ## 📊 Benchmark Output
 
 - `benchmark_speed.json`: Speed results per document.
-- `benchmark_accuracy.json`: BLEU and ROUGE scores.
+- `benchmark_accuracy.json`: Diff in percentage between Mistral whole and Datalab.
 - `benchmark_report.md`: Final Markdown report with tables.
 - `speed_chart.png`: Speed comparison plot.
 - `accuracy_chart.png`: Accuracy comparison plot.
 
 ## 📝 Sample Report Excerpt
 
-| File       | BLEU  | ROUGE-1 | ROUGE-L |
-|------------|-------|---------|---------|
-| sample.pdf | 0.8123| 0.8745  | 0.8604  |
+# OCR Benchmark Report
 
+## Speed Benchmark
+
+| File | Mistral Whole | Mistral WebAPI | Mistral Split | Mistral Split WebAPI | Datalab Whole |
+|---|---|---|---|---|---|
+| attention.pdf | 9.27s | 8.75s | 33.52s | 10.2s | 38.26s |
+| NBA.pdf | 14.06s | 12.35s | 42.51s | 12.8s | 86.51s |
+
+## Accuracy Benchmark (Diff Ratio)
+
+| File | Diff Ratio |
+|---|---|
+| NBA_whole | 0.9986 |
+| attention_whole | 0.9072 |
 ---
 
 ✅ **Ready for large-scale OCR benchmarking!**
