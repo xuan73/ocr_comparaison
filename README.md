@@ -77,15 +77,24 @@ python run_all.py
 
 | File | Mistral Whole | Mistral WebAPI | Mistral Split | Mistral Split WebAPI | Datalab Whole |
 |---|---|---|---|---|---|
-| attention.pdf | 9.27s | 8.75s | 33.52s | 10.2s | 38.26s |
-| NBA.pdf | 14.06s | 12.35s | 42.51s | 12.8s | 86.51s |
+| attention.pdf | 11.51s | 11.24s | 32.02s | 12.89s | 36.58s |
+| CV - Yuxuan Wang.pdf | 3.19s | 2.62s | 7.56s | 2.83s | 8.33s |
 
-## Accuracy Benchmark (Diff Ratio)
+## Nb splitting 
 
-| File | Diff Ratio |
+| File | Mistral Whole | 2 parts | 4 parts | 8 parts | 16 parts |
+|---|---|---|---|---|---|
+| attention.pdf | 11.51s | 16.49s | 12.89s | 14.17s | 11.57s |
+| CV - Yuxuan Wang.pdf | 3.19s | 2.61s | 2.83s | 2.59s | 2.11s |
+
+
+## Accuracy Benchmark (Similarity)
+
+| File | Similarity |
 |---|---|
-| NBA_whole | 0.9986 |
-| attention_whole | 0.9072 |
+| attention | 0.9305 |
+| cv - yuxuan wang | 0.9762 |
+
 ---
 
 ✅ **Ready for large-scale OCR benchmarking!**
