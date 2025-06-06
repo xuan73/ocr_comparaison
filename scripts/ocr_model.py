@@ -89,7 +89,11 @@ class MistralOCR(OcrModel):
     def split_pdf(self, input_pdf, output_dir, parts):
         reader = PdfReader(input_pdf)
         total_pages = len(reader.pages)
-        part_size = total_pages // parts
+        if total_pages < parts:
+            part_size = 1
+            parts = total_pages
+        else:
+            part_size = total_pages // parts
         os.makedirs(output_dir, exist_ok=True)
         output_files = []
 
@@ -195,6 +199,7 @@ class MistralOCR(OcrModel):
     #         return None
 
     async def send_part(self, client, part_file):
+        begin_wait = time.time()
         data_url = self.encode_pdf_to_data_url(part_file)
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -217,6 +222,8 @@ class MistralOCR(OcrModel):
                 with open(md_file, "w", encoding="utf-8") as f:
                     for page in data.get("pages", []):
                         f.write(page.get("markdown", "") + "\n\n")
+                finish_wait = time.time()
+                print(f"WAIT TIME = {finish_wait - begin_wait}")
                 return md_file
             else:
                 print(f"[FAILED] Part {part_file} failed (Status {response.status_code})")
@@ -225,11 +232,14 @@ class MistralOCR(OcrModel):
             print(f"[FAILED] Web API error on {part_file}: {e}")
             return None
 
-    async def aync_convert_split_webapi(self, input_pdf, output_md, parts=5, max_connections=5):
+    async def aync_convert_split_webapi(self, input_pdf, output_md, parts=5, max_connections=None):
+        begin_split = time.time()
         part_files = self.split_pdf(input_pdf, "temp_parts_webapi", parts)
         os.makedirs("temp_md_webapi", exist_ok=True)
 
-        limits = httpx.Limits(max_connections=max_connections)
+        limits = httpx.Limits(max_connections=max_connections, keepalive_expiry=None)
+        begin_request = time.time()
+        wait_time = []
         async with httpx.AsyncClient(limits=limits, timeout=60.0) as client:
             tasks = [self.send_part(client, part_file) for part_file in part_files]
             md_files = await asyncio.gather(*tasks)
@@ -237,18 +247,22 @@ class MistralOCR(OcrModel):
         # tasks = [self.send_part_mistral(part_file) for part_file in part_files]
         # md_files = await asyncio.gather(*tasks)
 
+        begin_merge = time.time()
         md_files = [f for f in md_files if f]
         md_files.sort(key=lambda x: int(os.path.basename(x).split("_")[-1].split(".")[0]))
-
         with open(output_md, "w", encoding="utf-8") as fout:
             for md_file in md_files:
                 with open(md_file, "r", encoding="utf-8") as fin:
                     fout.write(fin.read() + "\n")
+        finish_merge = time.time()
 
         print(f"[SUCCESS] Web API Split + Parallel OCR Markdown saved: {output_md}")
+        print(f"SPLIT TIME = {begin_request - begin_split}, \
+              REQUEST TIME = {begin_merge - begin_request}, \
+              MERGE TIME = {finish_merge - begin_merge}")
 
     @timeit
-    def convert_split_webapi(self, input_pdf, output_md, parts=5, max_connections=5):
+    def convert_split_webapi(self, input_pdf, output_md, parts=5, max_connections=None):
         asyncio.run(self.aync_convert_split_webapi(input_pdf, output_md, parts=parts, max_connections=max_connections))
 
 
@@ -282,16 +296,28 @@ def main():
 
     for pdf_file in input_dir.glob("*.pdf"):
         base_name = pdf_file.stem.lower()
-        if base_name != 'attention':
-            continue
+        # if base_name != 'cv - yuxuan wang':
+        #     continue
         print(f"\n[Processing] {pdf_file.name}")
 
         mistral.convert(str(pdf_file), mistral_output_dir / f"{base_name}_mistral.md")
-        mistral.convert_webapi(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_webapi.md")
-        mistral.convert_split_batch(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_split.md", parts=10)
-        mistral.convert_split_webapi(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_split_webapi.md", parts=10, max_connections=10)
+        # mistral.convert_webapi(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_webapi.md")
+        # mistral.convert_split_batch(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_split.md", parts=4)
+        begin = time.time()
+        mistral.convert_split_webapi(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_split_2_webapi.md", parts=2, max_connections=None)
+        split_2 = time.time()
+        print(f'2 parts splitted and read: {split_2 - begin}')
+        mistral.convert_split_webapi(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_split_4_webapi.md", parts=4, max_connections=None)
+        split_4 = time.time()
+        print(f'4 parts splitted and read: {split_4 - split_2}')
+        mistral.convert_split_webapi(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_split_8_webapi.md", parts=8, max_connections=None)
+        split_8 = time.time()
+        print(f'8 parts splitted and read: {split_8 - split_4}')
+        mistral.convert_split_webapi(str(pdf_file), mistral_output_dir / f"{base_name}_mistral_split_16_webapi.md", parts=16, max_connections=None)
+        split_16 = time.time()
+        print(f'16 parts splitted and read: {split_16 - split_8}')
 
-        datalab.convert(str(pdf_file), datalab_output_dir / f"{base_name}_datalab.md")
+        # datalab.convert(str(pdf_file), datalab_output_dir / f"{base_name}_datalab.md")
 
 if __name__ == "__main__":
     main()

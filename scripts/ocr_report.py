@@ -26,16 +26,24 @@ def generate_report():
         f.write("| File | Mistral Whole | Mistral WebAPI | Mistral Split | Mistral Split WebAPI | Datalab Whole |\n")
         f.write("|---|---|---|---|---|---|\n")
         for entry in speed_data:
-            f.write(f"| {entry['file']} | {entry['mistral_whole_time']}s | {entry['mistral_webapi_time']}s | {entry['mistral_split_batch_time']}s | {entry['mistral_split_webapi_time']}s | {entry['datalab_whole_time']}s |\n")
+            f.write(f"| {entry['file']} | {entry['mistral_whole_time']}s | {entry['mistral_webapi_time']}s | {entry['mistral_split_batch_time']}s | {entry['mistral_split_4_webapi_time']}s | {entry['datalab_whole_time']}s |\n")
+
+        f.write("\n")
+
+        f.write("## Nb splitting \n\n")
+        f.write("| File | Mistral Whole | 2 parts | 4 parts | 8 parts | 16 parts |\n")
+        f.write("|---|---|---|---|---|---|\n")
+        for entry in speed_data:
+            f.write(f"| {entry['file']} | {entry['mistral_whole_time']}s | {entry['mistral_split_2_webapi_time']}s | {entry['mistral_split_4_webapi_time']}s | {entry['mistral_split_8_webapi_time']}s | {entry['mistral_split_16_webapi_time']}s |\n")
 
         f.write("\n")
 
         # Accuracy Results
-        f.write("## Accuracy Benchmark (Diff Ratio)\n\n")
-        f.write("| File | Diff Ratio |\n")
+        f.write("## Accuracy Benchmark (Similarity)\n\n")
+        f.write("| File | Similarity |\n")
         f.write("|---|---|\n")
         for entry in accuracy_data:
-            f.write(f"| {entry['file']} | {entry['diff_ratio']:.4f} |\n")
+            f.write(f"| {entry['file']} | {entry['similarity']:.4f} |\n")
 
         f.write("\n")
 
@@ -50,7 +58,7 @@ def create_charts(speed_data, accuracy_data):
     mistral_whole = [d['mistral_whole_time'] for d in speed_data]
     mistral_webapi = [d['mistral_webapi_time'] for d in speed_data]
     mistral_split_batch = [d['mistral_split_batch_time'] for d in speed_data]
-    mistral_split_webapi = [d['mistral_split_webapi_time'] for d in speed_data]
+    mistral_split_webapi = [d['mistral_split_4_webapi_time'] for d in speed_data]
     datalab_whole = [d['datalab_whole_time'] for d in speed_data]
 
     plt.figure(figsize=(12, 6))
@@ -68,14 +76,14 @@ def create_charts(speed_data, accuracy_data):
 
     # Accuracy Chart
     accuracy_files = [d['file'] for d in accuracy_data]
-    diff_ratios = [d['diff_ratio'] for d in accuracy_data]
+    diff_ratios = [d['similarity'] for d in accuracy_data]
 
     plt.figure(figsize=(12, 6))
-    plt.bar(accuracy_files, diff_ratios, label='Diff Ratio')
+    plt.bar(accuracy_files, diff_ratios, label='Jaccard Similarity')
     plt.xticks(rotation=45, ha='right')
     plt.ylim(0.85, 1)
-    plt.ylabel('Diff Ratio (1 = Perfect Match)')
-    plt.title('OCR Diff Ratio Comparison')
+    plt.ylabel('Similarity (1 = Perfect Match)')
+    plt.title('OCR Similarity Comparison')
     plt.tight_layout()
     plt.savefig(RESULTS_DIR / "accuracy_chart.png")
     

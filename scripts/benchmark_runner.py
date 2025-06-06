@@ -17,10 +17,13 @@ for directory in [MISTRAL_OUT, DATALAB_OUT, RESULTS_DIR]:
 
 # Helper function for timing
 def time_function(func, *args, **kwargs):
-    start = time.time()
-    func(*args, **kwargs)
-    end = time.time()
-    return round(end - start, 2)
+    total = 0
+    for i in range(3):
+        start = time.time()
+        func(*args, **kwargs)
+        end = time.time()
+        total += end - start
+    return round(total / 3.0, 2)
 
 # OCR Runner
 class OCRBenchmark:
@@ -35,11 +38,11 @@ class OCRBenchmark:
         duration = time_function(self.ocr_model.convert_webapi, str(pdf_path), output_md_path)
         return duration
 
-    def run_split_batch(self, pdf_path, output_md_path, parts=10):
+    def run_split_batch(self, pdf_path, output_md_path, parts=5):
         duration = time_function(self.ocr_model.convert_split_batch, str(pdf_path), output_md_path, parts)
         return duration
 
-    def run_split_webapi(self, pdf_path, output_md_path, parts=10):
+    def run_split_webapi(self, pdf_path, output_md_path, parts=5):
         duration = time_function(self.ocr_model.convert_split_webapi, str(pdf_path), output_md_path, parts)
         return duration
 
@@ -57,11 +60,13 @@ def main():
 
     for pdf in DATA_DIR.glob("*.pdf"):
         base_name = pdf.stem
+        # if base_name == '2021PVAG':
+        #     continue
 
         print(f"\n[Processing] {pdf.name}")
 
         # Mistral Whole
-        mistral_whole_md = MISTRAL_OUT / f"{base_name}_whole.md"
+        mistral_whole_md = MISTRAL_OUT / f"{base_name}_mistral.md"
         mistral_whole_time = mistral_benchmark.run_whole(pdf, mistral_whole_md)
 
         # Mistral WebAPI
@@ -70,22 +75,37 @@ def main():
 
         # Mistral Split + Batch
         mistral_split_md = MISTRAL_OUT / f"{base_name}_split.md"
-        mistral_split_time = mistral_benchmark.run_split_batch(pdf, mistral_split_md, parts=10)
+        mistral_split_time = mistral_benchmark.run_split_batch(pdf, mistral_split_md, parts=4)
 
         # Mistral Split + WebAPI
-        mistral_split_webapi_md = MISTRAL_OUT / f"{base_name}_split_webapi.md"
-        mistral_split_webapi_time = mistral_benchmark.run_split_webapi(pdf, mistral_split_webapi_md, parts=10)
+        mistral_split_webapi_md = MISTRAL_OUT / f"{base_name}_split_2_webapi.md"
+        mistral_split_2_webapi_time = mistral_benchmark.run_split_webapi(pdf, mistral_split_webapi_md, parts=2)
+
+        mistral_split_webapi_md = MISTRAL_OUT / f"{base_name}_split_4_webapi.md"
+        mistral_split_4_webapi_time = mistral_benchmark.run_split_webapi(pdf, mistral_split_webapi_md, parts=4)
+
+        mistral_split_webapi_md = MISTRAL_OUT / f"{base_name}_split_8_webapi.md"
+        mistral_split_8_webapi_time = mistral_benchmark.run_split_webapi(pdf, mistral_split_webapi_md, parts=8)
+
+        mistral_split_webapi_md = MISTRAL_OUT / f"{base_name}_split_16_webapi.md"
+        mistral_split_16_webapi_time = mistral_benchmark.run_split_webapi(pdf, mistral_split_webapi_md, parts=16)
 
         # Datalab Whole
         datalab_whole_md = DATALAB_OUT / f"{base_name}_datalab.md"
-        datalab_whole_time = datalab_benchmark.run_whole(pdf, datalab_whole_md)
+        if base_name == '2021PVAG':
+            datalab_whole_time = 0
+        else:
+            datalab_whole_time = datalab_benchmark.run_whole(pdf, datalab_whole_md)
 
         report.append({
             "file": pdf.name,
             "mistral_whole_time": mistral_whole_time,
             "mistral_webapi_time": mistral_webapi_time,
             "mistral_split_batch_time": mistral_split_time,
-            "mistral_split_webapi_time": mistral_split_webapi_time,
+            "mistral_split_2_webapi_time": mistral_split_2_webapi_time,
+            "mistral_split_4_webapi_time": mistral_split_4_webapi_time,
+            "mistral_split_8_webapi_time": mistral_split_8_webapi_time,
+            "mistral_split_16_webapi_time": mistral_split_16_webapi_time,
             "datalab_whole_time": datalab_whole_time
         })
 
